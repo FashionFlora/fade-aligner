@@ -7,7 +7,7 @@
 <meta name="description" content="Fade Aligner: fast, accurate phoneme-level forced alignment of speech and text. Train on your own data and get durations and TextGrids for any espeak-ng language. Interactive demo, quick start and output format.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #fbfaf7; --surface: #ffffff; --surface-2: #f3f1ec; --ink: #1d1d1b; --ink-2: #4a4a46; --ink-3: #7a7a74;
@@ -85,7 +85,7 @@ ul.plain { margin: 0; padding-left: 20px; color: var(--ink-2); } ul.plain li { m
 .clips button small { font: 400 12px "JetBrains Mono", monospace; opacity: .8; }
 .clips button[aria-selected="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .vtext { font-size: 17px; margin: 0 0 4px; }
-.vipa { font: 400 14px "JetBrains Mono", monospace; color: var(--accent-2); margin: 0 0 14px; overflow-wrap: anywhere; }
+.vipa { font: 400 15px "Noto Sans", "DejaVu Sans", "Segoe UI", "Arial Unicode MS", sans-serif; color: var(--accent-2); margin: 0 0 14px; overflow-wrap: anywhere; }
 .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 12px; }
 .controls .btn { padding: 6px 14px; box-shadow: none; }
 .controls label { font-size: 14px; color: var(--ink-2); display: inline-flex; gap: 6px; align-items: center; }
@@ -95,13 +95,13 @@ ul.plain { margin: 0; padding-left: 20px; color: var(--ink-2); } ul.plain li { m
 .stage { position: relative; }
 .words { position: relative; height: 32px; background: var(--surface-2); }
 .wd { position: absolute; top: 3px; bottom: 3px; min-width: 2px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent);
-  border-radius: 6px; padding: 0 4px; font: 500 13px "JetBrains Mono", monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; text-align: left; }
+  border-radius: 6px; padding: 0 4px; font: 500 13px "Noto Sans", "DejaVu Sans", "Segoe UI", "Arial Unicode MS", sans-serif; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; text-align: left; }
 .wd:hover, .wd.on { background: var(--accent); color: var(--bg); }
 .spec { position: relative; height: 210px; cursor: crosshair; user-select: none; -webkit-user-select: none; }
 .spec img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
 .gl { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.22); pointer-events: none; }
 .ph { position: absolute; bottom: 0; height: 40px; min-width: 3px; padding: 0; border: 0; border-left: 1px solid rgba(255,255,255,.6);
-  background: rgba(0,0,0,.35); color: #fff; font: 500 13px "JetBrains Mono", monospace; overflow: hidden; cursor: pointer; text-align: center; line-height: 40px; }
+  background: rgba(0,0,0,.35); color: #fff; font: 500 14px "Noto Sans", "DejaVu Sans", "Segoe UI", "Arial Unicode MS", sans-serif; overflow: hidden; cursor: pointer; text-align: center; line-height: 40px; }
 .ph.sil { background: rgba(150,150,150,.28); border-left-color: rgba(255,255,255,.25); cursor: pointer; }
 .ph:hover, .ph.on { background: rgba(124,196,160,.6); }
 .ph.sil:hover, .ph.sil.on { background: rgba(190,190,190,.5); }
@@ -113,7 +113,7 @@ ul.plain { margin: 0; padding-left: 20px; color: var(--ink-2); } ul.plain li { m
 .tick.big { height: 9px; }
 .tick span { position: absolute; top: 8px; left: 3px; font: 400 10px "JetBrains Mono", monospace; color: var(--ink-3); white-space: nowrap; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #ffd166; pointer-events: none; z-index: 4; display: none; }
-.readout { margin-top: 10px; min-height: 24px; font: 400 14px "JetBrains Mono", monospace; color: var(--ink-2); }
+.readout { margin-top: 10px; min-height: 24px; font: 400 14px "Noto Sans", "DejaVu Sans", "Segoe UI", "Arial Unicode MS", sans-serif; color: var(--ink-2); }
 .readout b { color: var(--ink); font-weight: 500; }
 .hint { font-size: 13px; color: var(--ink-3); margin: 8px 0 0; }
 .empty { padding: 28px 16px; text-align: center; color: var(--ink-2); border: 1px dashed var(--line); border-radius: 12px; }
@@ -510,10 +510,10 @@ item []:
   // width of the stage: fits the container, but never narrower than PX_PER_S_MIN per second (then it scrolls)
   function layout() {
     if (!clip) return;
-    var avail = elWrap.clientWidth, w = Math.max(avail, Math.ceil(clip.duration * PX_PER_S_MIN));
+    var avail = elWrap.clientWidth, pps = window.innerWidth < 760 ? 300 : PX_PER_S_MIN, w = Math.max(avail, Math.ceil(clip.duration * pps));  // phones: wider stage so phoneme labels fit
     elStage.style.width = w + "px";
     phones.forEach(function (tok) {
-      var px = (tok.end - tok.start) / clip.duration * w, need = tok.sym.length * 8.5 + 8;
+      var px = (tok.end - tok.start) / clip.duration * w, need = tok.sym.length * 8 + 4;
       if (px < need) tok.node.classList.add("nolab"); else tok.node.classList.remove("nolab");
     });
   }
