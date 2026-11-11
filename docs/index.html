@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fade Aligner</title>
+<meta name="description" content="Fade Aligner: fast, accurate phoneme-level forced alignment of speech and text. Train on your own data and get durations and TextGrids for any espeak-ng language. Interactive demo, quick start and output format.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fbfaf7; --surface: #ffffff; --surface-2: #f3f1ec; --ink: #1d1d1b; --ink-2: #4a4a46; --ink-3: #7a7a74;
+  --line: #e3e0d8; --accent: #2f6b4f; --accent-soft: #e3efe8; --accent-2: #8a5a1f; --accent-2-soft: #f5ead9;
+  --mask: #c9c5bb; --code-bg: #f3f1ec; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+  --c1: #2f6b4f; --c2: #4f8a6c; --c3: #7aa98f; --c4: #8a5a1f; --c5: #b98544;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141513; --surface: #1c1d1a; --surface-2: #242522; --ink: #ecebe6; --ink-2: #c2c0b8; --ink-3: #8f8d86;
+    --line: #34352f; --accent: #7cc4a0; --accent-soft: #1f3329; --accent-2: #e0ad6a; --accent-2-soft: #3a2c19;
+    --mask: #4a4a44; --code-bg: #232420; --shadow: none;
+    --c1: #7cc4a0; --c2: #5fa583; --c3: #487f65; --c4: #e0ad6a; --c5: #b98544;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141513; --surface: #1c1d1a; --surface-2: #242522; --ink: #ecebe6; --ink-2: #c2c0b8; --ink-3: #8f8d86;
+  --line: #34352f; --accent: #7cc4a0; --accent-soft: #1f3329; --accent-2: #e0ad6a; --accent-2-soft: #3a2c19;
+  --mask: #4a4a44; --code-bg: #232420; --shadow: none;
+  --c1: #7cc4a0; --c2: #5fa583; --c3: #487f65; --c4: #e0ad6a; --c5: #b98544;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+code { font: 0.92em "JetBrains Mono", monospace; background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+header.hero { padding: 64px 0 40px; border-bottom: 1px solid var(--line); }
+.kicker { font: 500 13px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; margin: 14px 0 12px; letter-spacing: -.02em; }
+.lead { font-size: clamp(17px, 2.4vw, 20px); color: var(--ink-2); max-width: 720px; margin: 0 0 24px; }
+.links { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font: 500 15px Inter, sans-serif; box-shadow: var(--shadow); cursor: pointer; }
+.btn:hover { text-decoration: none; border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.status { margin-top: 18px; font-size: 14px; color: var(--ink-3); }
+section { padding: 48px 0 8px; }
+h2 { font-size: 28px; letter-spacing: -.01em; margin: 0 0 8px; }
+h3 { font-size: 18px; margin: 28px 0 8px; }
+.sub { color: var(--ink-2); margin: 0 0 20px; max-width: 760px; }
+.grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); }
+.card b { display: block; margin-bottom: 4px; }
+.card p { margin: 0; color: var(--ink-2); font-size: 15px; }
+figure { margin: 18px 0 28px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+figure svg { width: 100%; height: auto; display: block; }
+.figscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 760px) { .figscroll svg { min-width: 720px; } .figscroll::after { content: "\2190 scroll \2192"; display: block; text-align: center; color: var(--ink-3); font-size: 12px; margin-top: 4px; } }
+figcaption { color: var(--ink-3); font-size: 14px; margin-top: 10px; }
+.svgtext { fill: var(--ink); font: 500 13px Inter, sans-serif; }
+.svgsmall { fill: var(--ink-2); font: 400 11.5px Inter, sans-serif; }
+.svgmono { fill: var(--ink-2); font: 400 11px "JetBrains Mono", monospace; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.tablewrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 8px; box-shadow: var(--shadow); }
+.pill { font: 500 12px "JetBrains Mono", monospace; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.pill.alt { background: var(--accent-2-soft); color: var(--accent-2); }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; font: 13.5px/1.55 "JetBrains Mono", monospace; color: var(--ink); margin: 0; }
+pre code { background: none; padding: 0; font: inherit; }
+.codeblock { position: relative; margin: 10px 0; }
+.codeblock .copy { position: absolute; top: 8px; right: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 8px; padding: 3px 9px; font: 500 12px Inter, sans-serif; cursor: pointer; }
+.codeblock .copy:hover { border-color: var(--accent); color: var(--accent); }
+.note { color: var(--ink-3); font-size: 14px; }
+footer { margin-top: 56px; padding: 28px 0 48px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 14px; }
+.theme { position: fixed; top: 12px; right: 12px; z-index: 20; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 6px 10px; font: 500 13px Inter, sans-serif; cursor: pointer; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+ul.plain { margin: 0; padding-left: 20px; color: var(--ink-2); } ul.plain li { margin: 6px 0; }
+
+/* ---- viewer ---- */
+.viewer { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+.clips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.clips button { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); padding: 6px 12px; border-radius: 999px; font: 500 14px Inter, sans-serif; cursor: pointer; display: inline-flex; gap: 8px; align-items: baseline; }
+.clips button small { font: 400 12px "JetBrains Mono", monospace; opacity: .8; }
+.clips button[aria-selected="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.vtext { font-size: 17px; margin: 0 0 4px; }
+.vipa { font: 400 14px "JetBrains Mono", monospace; color: var(--accent-2); margin: 0 0 14px; overflow-wrap: anywhere; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 12px; }
+.controls .btn { padding: 6px 14px; box-shadow: none; }
+.controls label { font-size: 14px; color: var(--ink-2); display: inline-flex; gap: 6px; align-items: center; }
+.controls select { font: 500 14px Inter, sans-serif; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; }
+.clock { font: 400 13px "JetBrains Mono", monospace; color: var(--ink-3); margin-left: auto; }
+.vwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid var(--line); background: #000; }
+.stage { position: relative; }
+.words { position: relative; height: 32px; background: var(--surface-2); }
+.wd { position: absolute; top: 3px; bottom: 3px; min-width: 2px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent);
+  border-radius: 6px; padding: 0 4px; font: 500 13px "JetBrains Mono", monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; text-align: left; }
+.wd:hover, .wd.on { background: var(--accent); color: var(--bg); }
+.spec { position: relative; height: 210px; cursor: crosshair; user-select: none; -webkit-user-select: none; }
+.spec img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; -webkit-user-drag: none; }
+.gl { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.22); pointer-events: none; }
+.ph { position: absolute; bottom: 0; height: 40px; min-width: 3px; padding: 0; border: 0; border-left: 1px solid rgba(255,255,255,.6);
+  background: rgba(0,0,0,.35); color: #fff; font: 500 13px "JetBrains Mono", monospace; overflow: hidden; cursor: pointer; text-align: center; line-height: 40px; }
+.ph.sil { background: rgba(150,150,150,.28); border-left-color: rgba(255,255,255,.25); cursor: pointer; }
+.ph:hover, .ph.on { background: rgba(124,196,160,.6); }
+.ph.sil:hover, .ph.sil.on { background: rgba(190,190,190,.5); }
+.ph:focus-visible, .wd:focus-visible { outline: 2px solid #ffd166; outline-offset: -2px; z-index: 3; }
+.ph .lab { pointer-events: none; }
+.ph.nolab .lab { display: none; }
+.ruler { position: relative; height: 20px; background: var(--surface-2); }
+.tick { position: absolute; top: 0; width: 1px; height: 6px; background: var(--ink-3); }
+.tick.big { height: 9px; }
+.tick span { position: absolute; top: 8px; left: 3px; font: 400 10px "JetBrains Mono", monospace; color: var(--ink-3); white-space: nowrap; }
+.playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #ffd166; pointer-events: none; z-index: 4; display: none; }
+.readout { margin-top: 10px; min-height: 24px; font: 400 14px "JetBrains Mono", monospace; color: var(--ink-2); }
+.readout b { color: var(--ink); font-weight: 500; }
+.hint { font-size: 13px; color: var(--ink-3); margin: 8px 0 0; }
+.empty { padding: 28px 16px; text-align: center; color: var(--ink-2); border: 1px dashed var(--line); border-radius: 12px; }
+@media (max-width: 560px) {
+  header.hero { padding-top: 48px; } section { padding-top: 36px; } th, td { padding: 8px 6px; }
+  .viewer { padding: 12px; } .spec { height: 170px; } .clock { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<button class="theme" id="theme" aria-label="Switch dark mode">&#9680; Theme</button>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Forced alignment</div>
+    <h1>Fade Aligner</h1>
+    <p class="lead">Fast, accurate phoneme-level alignment of speech and text. Train it on your own data, get durations and TextGrids for any espeak-ng language.</p>
+    <div class="links">
+      <a class="btn primary" href="https://github.com/FashionFlora/fade-aligner">GitHub</a>
+      <a class="btn" href="https://huggingface.co/FashionFlora/fade-aligner">&#129303; Hugging Face</a>
+      <a class="btn" href="https://arxiv.org/abs/2406.02560">Paper</a>
+      <a class="btn" href="https://github.com/Stylish-TTS/Stylish-TTS">Stylish-TTS</a>
+    </div>
+    <div class="status">Demo model trained on open data only: LibriTTS-R (CC BY 4.0), English.</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="listen">
+  <h2>Listen to every phoneme</h2>
+  <p class="sub">Pick a clip, then click any phoneme or word to hear exactly that segment. The boundaries are the aligner's output, drawn at their exact positions on the spectrogram.</p>
+  <div class="viewer" id="viewer">
+    <div class="clips" id="clips" role="tablist" aria-label="Clips"></div>
+    <div id="vbody" hidden>
+      <p class="vtext" id="vtext"></p>
+      <p class="vipa" id="vipa"></p>
+      <div class="controls">
+        <button class="btn" id="playall" type="button">&#9654; Play all</button>
+        <label>Speed
+          <select id="speed" aria-label="Playback speed"><option value="1">1x</option><option value="0.5">0.5x</option><option value="0.25">0.25x</option></select>
+        </label>
+        <label><input type="checkbox" id="pad"> Pad segments by &plusmn;20 ms (off by default)</label>
+        <span class="clock" id="clock">0.00 / 0.00 s</span>
+      </div>
+      <div class="vwrap" id="vwrap">
+        <div class="stage" id="stage">
+          <div class="words" id="words"></div>
+          <div class="spec" id="spec"><img id="specimg" alt="Mel spectrogram, 0 to 8 kHz" draggable="false"><div id="guides"></div><div id="phones"></div></div>
+          <div class="ruler" id="ruler"></div>
+          <div class="playhead" id="playhead"></div>
+        </div>
+      </div>
+      <div class="readout" id="readout" aria-live="off">Hover or focus a phoneme.</div>
+      <p class="hint">Click a phoneme or word to play it. Click the spectrogram to play from that point. Keyboard: Tab to the phonemes, Left/Right to move, Enter or Space to play. Spectrogram: mel, 0&ndash;8 kHz; the time axis spans the clip exactly. Silences (<code>_</code>) are grey.</p>
+    </div>
+    <div class="empty" id="empty" hidden>Demo clips are added at release. Come back soon, or run <code>tools/make_demo.py</code> on your own alignments to build this viewer.</div>
+  </div>
+</section>
+
+<section id="how">
+  <h2>How it works</h2>
+  <p class="sub">A CTC acoustic model on mel spectrograms is refined with Viterbi training rounds, then decoded with an HMM that uses label priors to give every phone a duration.</p>
+  <figure>
+    <div class="figscroll">
+    <svg viewBox="0 0 940 250" role="img" aria-label="Three stages: CTC training on mel spectrograms, Viterbi training rounds with labels from the previous model, HMM decoding with label priors giving a duration per phone">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/></marker>
+      </defs>
+      <rect x="10" y="30" width="270" height="170" rx="14" fill="var(--surface-2)" stroke="var(--line)"/>
+      <text x="28" y="58" class="svgtext">1 &middot; CTC training</text>
+      <text x="28" y="80" class="svgsmall">mel spectrogram + phoneme string</text>
+      <text x="28" y="96" class="svgsmall">no alignment needed, the loss sums</text>
+      <text x="28" y="112" class="svgsmall">over all monotonic paths</text>
+      <g transform="translate(28,128)">
+        <rect x="0" y="0" width="14" height="40" rx="3" fill="var(--c3)"/><rect x="18" y="0" width="14" height="30" rx="3" fill="var(--c2)"/><rect x="36" y="0" width="14" height="44" rx="3" fill="var(--c3)"/><rect x="54" y="0" width="14" height="22" rx="3" fill="var(--c2)"/><rect x="72" y="0" width="14" height="36" rx="3" fill="var(--c3)"/><rect x="90" y="0" width="14" height="28" rx="3" fill="var(--c2)"/><rect x="108" y="0" width="14" height="42" rx="3" fill="var(--c3)"/>
+        <text x="136" y="26" class="svgmono">peaky spikes</text>
+      </g>
+      <rect x="335" y="30" width="270" height="170" rx="14" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="353" y="58" class="svgtext">2 &middot; Viterbi training rounds</text>
+      <text x="353" y="80" class="svgsmall">labels (frame per phone) come from</text>
+      <text x="353" y="96" class="svgsmall">the previous model; train with</text>
+      <text x="353" y="112" class="svgsmall">cross-entropy, align again, repeat</text>
+      <g transform="translate(353,128)">
+        <rect x="0" y="0" width="30" height="30" rx="4" fill="var(--c1)"/><rect x="34" y="0" width="52" height="30" rx="4" fill="var(--c2)"/><rect x="90" y="0" width="22" height="30" rx="4" fill="var(--c1)"/><rect x="116" y="0" width="64" height="30" rx="4" fill="var(--c3)"/>
+        <text x="0" y="48" class="svgmono">dense frame labels</text>
+      </g>
+      <rect x="660" y="30" width="270" height="170" rx="14" fill="var(--accent-2-soft)" stroke="var(--accent-2)"/>
+      <text x="678" y="58" class="svgtext">3 &middot; HMM decoding</text>
+      <text x="678" y="80" class="svgsmall">label priors (Huang et al., 2024)</text>
+      <text x="678" y="96" class="svgsmall">correct the peaky posteriors; Viterbi</text>
+      <text x="678" y="112" class="svgsmall">gives a duration for every phone</text>
+      <g transform="translate(678,128)">
+        <rect x="0" y="0" width="30" height="24" rx="4" fill="var(--c4)"/><rect x="32" y="0" width="52" height="24" rx="4" fill="var(--c5)"/><rect x="86" y="0" width="22" height="24" rx="4" fill="var(--c4)"/><rect x="110" y="0" width="64" height="24" rx="4" fill="var(--c5)"/>
+        <text x="0" y="42" class="svgmono">10 ms frames per token</text>
+      </g>
+      <line x1="282" y1="115" x2="331" y2="115" stroke="var(--ink-3)" stroke-width="1.6" marker-end="url(#ar)"/>
+      <line x1="607" y1="115" x2="656" y2="115" stroke="var(--ink-3)" stroke-width="1.6" marker-end="url(#ar)"/>
+      <path d="M470 202 C470 238, 400 238, 400 204" fill="none" stroke="var(--ink-3)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar)"/>
+      <text x="486" y="236" class="svgsmall">repeat: new labels from the latest model</text>
+    </svg>
+    </div>
+    <figcaption>Figure 1. Training and decoding pipeline of Fade Aligner.</figcaption>
+  </figure>
+  <div class="grid4">
+    <div class="card"><b>GPU Viterbi</b><p>Alignment runs as batched Viterbi on the GPU, so large corpora are labelled quickly.</p></div>
+    <div class="card"><b>GPU mel spectrograms</b><p>Features are computed on the GPU during training and alignment, with no feature cache to build.</p></div>
+    <div class="card"><b>Any espeak-ng language</b><p>Text is phonemized with espeak-ng, so any language it supports can be trained on your own data.</p></div>
+    <div class="card"><b>TextGrid and JSON</b><p>Export per-token durations as JSON or Praat TextGrids for annotation and TTS.</p></div>
+  </div>
+  <p class="note" style="margin-top:14px">Built on Stylish-TTS (MIT) with CTC label priors from Huang et al., ICASSP 2024.</p>
+</section>
+
+<section id="quickstart">
+  <h2>Quick start</h2>
+  <p class="sub">Install, prepare a folder of audio with transcripts, train, align and export.</p>
+  <h3>Install</h3>
+  <div class="codeblock"><pre><code>git clone https://github.com/FashionFlora/fade-aligner &amp;&amp; cd fade-aligner
+pip install -r requirements.txt
+sudo apt install espeak-ng</code></pre></div>
+  <h3>Prepare data</h3>
+  <div class="codeblock"><pre><code>python tools/prepare_data.py --format folder --lang en-us --out data/my_corpus ...</code></pre></div>
+  <h3>Train</h3>
+  <div class="codeblock"><pre><code>python aligner/stylish_aligner_train.py --epochs 100 --out runs/my_aligner ...</code></pre></div>
+  <h3>Align</h3>
+  <div class="codeblock"><pre><code>python aligner/stylish_aligner_align.py \
+    --model-path runs/my_aligner/model.pth \
+    --decode hmm --min-dur 3 --hmm-prior-scale 1.0 \
+    --output-dir alignments/ ...</code></pre></div>
+  <h3>Export TextGrid</h3>
+  <div class="codeblock"><pre><code>python tools/export_alignments.py --format textgrid --output-dir alignments/textgrid ...</code></pre></div>
+  <p class="note">The dots stand for the input paths; see <code>--help</code> of each script and the README for the full set of options.</p>
+</section>
+
+<section id="output">
+  <h2>Output format</h2>
+  <p class="sub">Alignments are computed on 10 ms frames. Every token of the phoneme string gets one duration, a whole number of frames, and the durations add up to the length of the audio. The symbol <code>_</code> is a silence or word boundary. With <code>--min-dur 3</code> every token lasts at least 3 frames (30 ms).</p>
+  <div class="two">
+    <div><h3 style="margin-top:0">JSON</h3>
+<div class="codeblock"><pre><code>{
+  "text": "Hello world.",
+  "ipa": "h&#601;l&#712;o&#650; w&#712;&#604;&#720;ld.",
+  "duration_s": 1.12,
+  "tokens": [
+    ["_", 0.00, 0.13],
+    ["h", 0.13, 0.18],
+    ["&#601;", 0.18, 0.22],
+    ["l", 0.22, 0.30],
+    ...
+  ]
+}</code></pre></div></div>
+    <div><h3 style="margin-top:0">TextGrid</h3>
+<div class="codeblock"><pre><code>File type = "ooTextFile"
+Object class = "TextGrid"
+xmin = 0
+xmax = 1.12
+tiers? &lt;exists&gt;
+size = 2
+item []:
+  item [1]:
+    class = "IntervalTier"
+    name = "words"
+  item [2]:
+    class = "IntervalTier"
+    name = "phones"
+    intervals [2]:
+      xmin = 0.13
+      xmax = 0.18
+      text = "h"</code></pre></div></div>
+  </div>
+  <p class="note">The TextGrid above is abbreviated. Words are the runs of tokens between <code>_</code> tokens.</p>
+</section>
+
+<section id="limits">
+  <h2>Limitations</h2>
+  <ul class="plain">
+    <li>The demo model is trained on English read speech only. Other languages need training on your own data.</li>
+    <li>Time resolution is one 10 ms frame, and very short phones are held to the minimum duration you set.</li>
+    <li>Text is phonemized by espeak-ng. Errors in the phonemization, such as a wrong reading of a name or number, carry over into the alignment.</li>
+    <li>Noisy recordings, music, overlapping speakers and transcripts that do not match the audio can degrade the result. Check the score and listen to a sample of the output.</li>
+    <li>Boundaries inside fast, coarticulated speech are inherently fuzzy, so expect disagreement with manual annotation on the order of a frame or two.</li>
+  </ul>
+</section>
+
+<section id="credits">
+  <h2>Credits &amp; license</h2>
+  <p class="sub">Code: MIT. Built on <a href="https://github.com/Stylish-TTS/Stylish-TTS">Stylish-TTS</a> (MIT) and <a href="https://github.com/yl4579/StyleTTS2">StyleTTS 2</a>, with <a href="https://github.com/k2-fsa/k2">k2</a> for decoding and <a href="https://github.com/espeak-ng/espeak-ng">espeak-ng</a> for phonemization. CTC label priors follow Huang et al., <a href="https://arxiv.org/abs/2406.02560">ICASSP 2024</a>.</p>
+  <p class="sub">The demo model is trained on <a href="https://www.openslr.org/141/">LibriTTS-R</a> (Koizumi et al., CC BY 4.0), English. Please attribute it when you reuse the demo model or its outputs.</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap"><p>Fade Aligner &middot; MIT license &middot; <a href="https://github.com/FashionFlora/fade-aligner">GitHub</a> &middot; <a href="https://huggingface.co/FashionFlora/fade-aligner">Hugging Face</a></p></div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var root = document.documentElement, themeBtn = document.getElementById("theme");
+  try { var t = localStorage.getItem("fade-theme"); if (t) root.setAttribute("data-theme", t); } catch (e) {}
+  themeBtn.addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") ? root.getAttribute("data-theme") === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    var next = dark ? "light" : "dark"; root.setAttribute("data-theme", next);
+    try { localStorage.setItem("fade-theme", next); } catch (e) {}
+  });
+
+  // copy buttons
+  Array.prototype.forEach.call(document.querySelectorAll(".codeblock"), function (cb) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "copy"; b.textContent = "Copy";
+    b.addEventListener("click", function () {
+      var txt = cb.querySelector("pre").innerText;
+      function done() { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1400); }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () { fallback(txt); done(); });
+      else { fallback(txt); done(); }
+    });
+    cb.appendChild(b);
+  });
+  function fallback(txt) {
+    var ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); } catch (e) {} document.body.removeChild(ta);
+  }
+
+  // ---------------- viewer ----------------
+  var $ = function (id) { return document.getElementById(id); };
+  var elClips = $("clips"), elBody = $("vbody"), elEmpty = $("empty"), elWords = $("words"), elPhones = $("phones"),
+      elGuides = $("guides"), elRuler = $("ruler"), elStage = $("stage"), elSpec = $("spec"), elWrap = $("vwrap"),
+      elHead = $("playhead"), elRead = $("readout"), elClock = $("clock"), elPlay = $("playall");
+  var PAD = 0.02, PX_PER_S_MIN = 130;
+  var audio = new Audio(); audio.preload = "auto";
+  var clips = [], clip = null, phones = [], navList = [], rafId = 0, segEnd = null, forced = null, activeEl = null, playing = false, ticket = 0;
+
+  function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function pct(x) { return (x / clip.duration * 100) + "%"; }
+  function ms(x) { return Math.round(x * 1000); }
+  function fmt2(x) { return x.toFixed(2); }
+  function reduceMotion() { return false; }
+
+  function showReadout(tok) {
+    var d = tok.end - tok.start;
+    elRead.innerHTML = "<b>" + esc(tok.sym === "_" ? "_ (silence)" : tok.sym) + "</b> &nbsp; " + ms(tok.start) + "&ndash;" + ms(tok.end) + " ms &nbsp;&middot;&nbsp; " +
+      ms(d) + " ms &nbsp;&middot;&nbsp; " + Math.round(d * 100) + " frames (10 ms)";
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  // ---- playback engine: one audio element, one active request ----
+  function setActive(node) {
+    if (activeEl === node) return;
+    if (activeEl) activeEl.classList.remove("on");
+    activeEl = node; if (node) node.classList.add("on");
+  }
+  function tokenAt(t) {
+    var hit = null;
+    for (var i = 0; i < phones.length; i++) {
+      var p = phones[i];
+      if (p.end > p.start && t >= p.start && t < p.end) return p;
+      if (p.start <= t) hit = p;
+    }
+    return hit;
+  }
+  function stopPlayback() {
+    ticket++; playing = false; segEnd = null; forced = null;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    audio.pause();
+    setActive(null); elPlay.innerHTML = "&#9654; Play all";
+  }
+  function tick() {
+    rafId = 0;
+    if (!playing) return;
+    var t = audio.currentTime;
+    movePlayhead(t);
+    if (segEnd !== null && t >= segEnd - 0.004) { var end = segEnd; stopPlayback(); movePlayhead(end); return; }
+    if (audio.ended) { stopPlayback(); return; }
+    if (forced) setActive(forced.node); else { var p = tokenAt(t); setActive(p ? p.node : null); }
+    rafId = requestAnimationFrame(tick);
+  }
+  function movePlayhead(t) {
+    elHead.style.display = "block";
+    elHead.style.left = (t / clip.duration * 100) + "%";
+    elClock.textContent = fmt2(Math.max(0, Math.min(t, clip.duration))) + " / " + fmt2(clip.duration) + " s";
+    // keep the playhead visible when the spectrogram scrolls
+    var sw = elStage.clientWidth;
+    if (elWrap.scrollWidth > elWrap.clientWidth + 1) {
+      var x = t / clip.duration * sw, l = elWrap.scrollLeft, w = elWrap.clientWidth;
+      if (x < l || x > l + w - 24) elWrap.scrollLeft = Math.max(0, x - w * 0.25);
+    }
+  }
+  // start playing [a, b] (b = null: to the end). node: element to keep highlighted (null: follow the time).
+  function playRange(a, b, node, label) {
+    stopPlayback();
+    var my = ++ticket; playing = true;
+    audio.playbackRate = parseFloat($("speed").value) || 1;
+    var start = Math.max(0, a), end = (b === null) ? null : Math.min(clip.duration, b);
+    segEnd = end;
+    forced = node ? { node: node } : null;
+    if (node) setActive(node);
+    if (b === null) elPlay.innerHTML = "&#9632; Stop";
+    function go() {
+      if (my !== ticket) return;
+      try { audio.currentTime = start; } catch (e) {}
+      var pr = audio.play();
+      if (pr && pr.catch) pr.catch(function () { if (my === ticket) stopPlayback(); });
+      movePlayhead(start);
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    }
+    if (audio.readyState >= 1) go(); else audio.addEventListener("loadedmetadata", function once() { audio.removeEventListener("loadedmetadata", once); go(); });
+  }
+  function playToken(tok) {
+    var a = tok.start, b = tok.end;
+    if ($("pad").checked) { a -= PAD; b += PAD; }
+    if (b - a < 0.001) { showReadout(tok); return; }   // zero-length marker: nothing to play
+    playRange(a, b, tok.node);
+  }
+  audio.addEventListener("ended", function () { if (playing) stopPlayback(); });
+  audio.addEventListener("timeupdate", function () {     // fallback when rAF is throttled (background tab)
+    if (playing && segEnd !== null && audio.currentTime >= segEnd - 0.004) stopPlayback();
+  });
+  $("speed").addEventListener("change", function () { audio.playbackRate = parseFloat(this.value) || 1; });
+  elPlay.addEventListener("click", function () { if (playing && segEnd === null) stopPlayback(); else playRange(0, null, null); });
+
+  // ---- build the view for a clip ----
+  function build(c) {
+    stopPlayback(); clip = c; phones = []; navList = [];
+    elHead.style.display = "none";
+    $("vtext").textContent = c.text; $("vipa").textContent = c.ipa;
+    elClock.textContent = "0.00 / " + fmt2(c.duration) + " s";
+    elWords.innerHTML = ""; elPhones.innerHTML = ""; elGuides.innerHTML = ""; elRuler.innerHTML = "";
+    elRead.textContent = "Hover or focus a phoneme.";
+    $("specimg").src = c.spec;
+    audio.src = c.audio; audio.load();
+
+    var run = [], words = [];
+    c.tokens.forEach(function (t) {
+      var tok = { sym: t[0], start: t[1], end: t[2] };
+      phones.push(tok);
+      if (tok.sym === "_") { if (run.length) words.push(run); run = []; } else run.push(tok);
+    });
+    if (run.length) words.push(run);
+
+    var seen = {};
+    phones.forEach(function (tok, i) {
+      var b = el("button", "ph" + (tok.sym === "_" ? " sil" : ""));
+      b.type = "button";
+      b.style.left = pct(tok.start); b.style.width = (((tok.end - tok.start) / c.duration) * 100) + "%";
+      b.setAttribute("aria-label", (tok.sym === "_" ? "silence" : tok.sym) + ", " + ms(tok.start) + " to " + ms(tok.end) + " milliseconds");
+      b.title = (tok.sym === "_" ? "silence" : tok.sym) + "  " + ms(tok.start) + "–" + ms(tok.end) + " ms";
+      var lab = el("span", "lab"); lab.textContent = tok.sym === "_" ? "" : tok.sym; b.appendChild(lab);
+      b.tabIndex = -1; tok.node = b; tok.idx = i;
+      b.addEventListener("click", function (e) { e.stopPropagation(); playToken(tok); });
+      b.addEventListener("mouseenter", function () { showReadout(tok); });
+      b.addEventListener("focus", function () { showReadout(tok); setRoving(tok); });
+      b.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        var k = navList.indexOf(tok), n = navList[k + (e.key === "ArrowRight" ? 1 : -1)];
+        if (!n && k === -1) n = navList[0];
+        if (n) n.node.focus();
+      });
+      elPhones.appendChild(b);
+      if (tok.sym !== "_") navList.push(tok);
+      // guide line at every boundary (deduplicated)
+      [tok.start, tok.end].forEach(function (x) {
+        var key = Math.round(x * 1000); if (seen[key]) return; seen[key] = 1;
+        var g = el("div", "gl"); g.style.left = pct(x); elGuides.appendChild(g);
+      });
+    });
+    if (navList.length) navList[0].node.tabIndex = 0;
+
+    words.forEach(function (w) {
+      var a = w[0].start, z = w[w.length - 1].end, ipa = w.map(function (x) { return x.sym; }).join("");
+      var b = el("button", "wd"); b.type = "button"; b.textContent = ipa;
+      b.style.left = pct(a); b.style.width = (((z - a) / c.duration) * 100) + "%";
+      b.title = ipa + "  " + ms(a) + "–" + ms(z) + " ms";
+      b.setAttribute("aria-label", "word " + ipa + ", " + ms(a) + " to " + ms(z) + " milliseconds");
+      var tok = { sym: ipa, start: a, end: z, node: b };
+      b.addEventListener("click", function () { var s = a, e2 = z; if ($("pad").checked) { s -= PAD; e2 += PAD; } playRange(s, e2, b); });
+      b.addEventListener("mouseenter", function () { showReadout(tok); });
+      b.addEventListener("focus", function () { showReadout(tok); });
+      elWords.appendChild(b);
+    });
+
+    // ruler
+    for (var s = 0; s <= c.duration + 1e-6; s += 0.1) {
+      var n = Math.round(s * 10), big = n % 5 === 0;
+      if (!big && c.duration > 8) continue;
+      var tk = el("div", "tick" + (big ? " big" : "")); tk.style.left = pct(s);
+      if (n % 10 === 0) { var sp = el("span"); sp.textContent = (n / 10) + " s"; tk.appendChild(sp); }
+      elRuler.appendChild(tk);
+    }
+    layout();
+  }
+  function setRoving(tok) { navList.forEach(function (t) { t.node.tabIndex = (t === tok) ? 0 : -1; }); }
+
+  // width of the stage: fits the container, but never narrower than PX_PER_S_MIN per second (then it scrolls)
+  function layout() {
+    if (!clip) return;
+    var avail = elWrap.clientWidth, w = Math.max(avail, Math.ceil(clip.duration * PX_PER_S_MIN));
+    elStage.style.width = w + "px";
+    phones.forEach(function (tok) {
+      var px = (tok.end - tok.start) / clip.duration * w, need = tok.sym.length * 8.5 + 8;
+      if (px < need) tok.node.classList.add("nolab"); else tok.node.classList.remove("nolab");
+    });
+  }
+  window.addEventListener("resize", layout);
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(elWrap);
+
+  // click on the spectrogram background: play from that point
+  elSpec.addEventListener("click", function (e) {
+    if (!clip) return;
+    var r = elStage.getBoundingClientRect(), t = (e.clientX - r.left) / r.width * clip.duration;
+    playRange(Math.max(0, Math.min(t, clip.duration)), null, null);
+  });
+
+  function select(i) {
+    Array.prototype.forEach.call(elClips.children, function (b, k) { b.setAttribute("aria-selected", k === i ? "true" : "false"); });
+    build(clips[i]);
+    try { localStorage.setItem("fade-clip", clips[i].id); } catch (e) {}
+  }
+
+  fetch("data/clips.json").then(function (r) { return r.json(); }).then(function (m) {
+    clips = Array.isArray(m) ? m : [];
+    if (!clips.length) { elEmpty.hidden = false; elClips.hidden = true; return; }
+    clips.forEach(function (c, i) {
+      var b = el("button"); b.type = "button"; b.setAttribute("role", "tab");
+      b.innerHTML = '<span>' + esc(String(c.lang).toUpperCase()) + '</span><small>' + c.duration.toFixed(1) + " s</small>";
+      b.addEventListener("click", function () { select(i); });
+      elClips.appendChild(b);
+    });
+    elBody.hidden = false;
+    var start = 0; try { var s = localStorage.getItem("fade-clip"); for (var k = 0; k < clips.length; k++) if (clips[k].id === s) start = k; } catch (e) {}
+    select(start);
+  }).catch(function () { elEmpty.hidden = false; elClips.hidden = true; });
+})();
+</script>
+</body>
+</html>

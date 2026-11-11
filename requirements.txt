@@ -1,0 +1,15 @@
+# Python 3.10+, a CUDA GPU is needed for training (alignment also runs on CPU, slowly).
+torch>=2.1
+torchaudio>=2.1
+numpy
+pyyaml
+tqdm
+soundfile>=0.12      # FLAC and Opus decoding needs libsndfile >= 1.1 (Opus >= 1.0.29)
+soxr                 # resampling to 44.1 kHz
+librosa              # mel filter bank (and fallback decoder for mp3)
+pyarrow              # audio.parquet store
+safetensors
+phonemizer>=3.2      # needs the espeak-ng program installed separately: sudo apt install espeak-ng
+# k2 is NOT on PyPI. Install the wheel that matches your torch / CUDA / python from
+#   https://k2-fsa.github.io/k2/installation/index.html   (e.g. pip install k2==<version>+cuda<ver>.torch<ver> -f <wheel index>)
+# or build from source (https://github.com/k2-fsa/k2). Tested here with k2 1.24.4.dev (cuda13.0, torch 2.13).

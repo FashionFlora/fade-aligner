@@ -1,0 +1,23 @@
+Fade Aligner - third-party components
+
+Code derived from
+  Stylish-TTS (MIT) - https://github.com/Stylish-TTS/Stylish-TTS
+  Copyright (c) 2023 Aaron (Yinghao) Li. The model, CTC loss with label priors, k2 alignment driver and data
+  handling in aligner/ are adapted from it. The upstream MIT notice is kept in LICENSE.
+
+Method
+  Huang et al., "Less Peaky and More Accurate CTC Forced Alignment by Label Priors", ICASSP 2024,
+  https://arxiv.org/abs/2406.02560 (label priors in training and HMM decoding, --hmm-prior-scale).
+  StyleTTS 2 (MIT) is the origin of the architecture family Stylish-TTS builds on.
+
+Dependencies (installed separately, not redistributed)
+  k2 (Apache-2.0), PyTorch (BSD-3-Clause), torchaudio (BSD-2-Clause), pyarrow (Apache-2.0), safetensors (Apache-2.0),
+  soundfile (BSD-3-Clause), soxr (LGPL-2.1+ library, MIT bindings), librosa (ISC), phonemizer (GPL-3.0),
+  tqdm (MPL-2.0 / MIT), PyYAML (MIT).
+  espeak-ng (GPL-3.0) is used only as an external program through phonemizer; it is not included here.
+  phonemizer is likewise installed from PyPI by the user and called as a library.
+
+Data of the demo model (CC BY 4.0, attribution required)
+  LibriTTS-R: Koizumi et al., "LibriTTS-R: A Restored Multi-Speaker Text-to-Speech Corpus", Interspeech 2023,
+  https://www.openslr.org/141/ (train-clean-100 subset), CC BY 4.0.
+  The demo model was trained on re-sampled (44.1 kHz) copies of these recordings; the corpus is not redistributed here.
